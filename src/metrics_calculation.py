@@ -6,7 +6,6 @@ PART 2: METRICS CALCULATION
     - These should return values when called by the main.py
 '''
 
-import numpy as np
 from sklearn.metrics import precision_recall_fscore_support
 import pandas as pd
 
@@ -40,6 +39,37 @@ def calculate_metrics(model_pred_df, genre_list, genre_true_counts, genre_tp_cou
 
     # Your code here
 
+    # For micro:
+    tp = sum(genre_tp_counts.values())
+    fp  = sum(genre_fp_counts.values())
+    fn =  sum(genre_true_counts.values()) - tp
+
+    micro_precision = tp / (tp + fp)
+    micro_recall = tp / (tp + fn)
+    micro_f1 = 2 * (micro_precision * micro_recall) / (micro_precision + micro_recall)
+
+    # For macro:
+    macro_precision_list = []
+    macro_recall_list = []
+    macro_f1_list = []
+
+    for genre in genre_list:
+        tp = genre_tp_counts.get(genre)
+        fp = genre_fp_counts.get(genre)
+        fn = genre_true_counts.get(genre) - tp
+
+        macro_precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        macro_recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+
+        macro_f1 = 2 * (macro_precision * macro_recall) / (macro_precision + macro_recall) if (macro_precision + macro_recall) > 0 else 0
+
+        macro_precision_list.append(macro_precision)
+        macro_recall_list.append(macro_recall)
+        macro_f1_list.append(macro_f1)
+
+
+    return (micro_precision), (micro_recall), (micro_f1), macro_precision_list, macro_recall_list, macro_f1_list
+
     
 def calculate_sklearn_metrics(model_pred_df, genre_list):
     '''
@@ -62,3 +92,23 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
     '''
 
     # Your code here
+    pred_rows = []
+    true_rows = []
+
+    for idx, row in model_pred_df.iterrows():
+        true_row = [1 if genre in row['actual genres'] else 0 for genre in genre_list]
+        pred_row = [1 if genre in row['predicted'] else 0 for genre in genre_list]
+        true_rows.append(true_row)
+        pred_rows.append(pred_row)
+
+    # Create sparse matrix where the (i,j) entry is a 0 if sample i wasn't assigned class j, and 1 if it was
+    true_matrix = pd.DataFrame(true_rows, columns=genre_list)
+    pred_matrix = pd.DataFrame(pred_rows, columns=genre_list)
+
+    # print(true_matrix)
+    # print(pred_matrix)
+    macro_prec, macro_rec, macro_f1, __ = precision_recall_fscore_support(true_matrix, pred_matrix, average='macro', zero_division=0.0)
+    micro_prec, micro_rec, micro_f1, __ = precision_recall_fscore_support(true_matrix, pred_matrix, average='micro', zero_division=0.0)
+
+    return macro_prec, macro_rec, macro_f1, micro_prec, micro_rec, micro_f1
+
