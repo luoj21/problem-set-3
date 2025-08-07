@@ -104,9 +104,7 @@ def calculate_sklearn_metrics(model_pred_df, genre_list):
     # Create sparse matrix where the (i,j) entry is a 0 if sample i wasn't assigned class j, and 1 if it was
     true_matrix = pd.DataFrame(true_rows, columns=genre_list)
     pred_matrix = pd.DataFrame(pred_rows, columns=genre_list)
-
-    # print(true_matrix)
-    # print(pred_matrix)
+    
     macro_prec, macro_rec, macro_f1, __ = precision_recall_fscore_support(true_matrix, pred_matrix, average='macro', zero_division=0.0)
     micro_prec, micro_rec, micro_f1, __ = precision_recall_fscore_support(true_matrix, pred_matrix, average='micro', zero_division=0.0)
 
